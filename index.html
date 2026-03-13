@@ -4,13 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TDA Toolkit</title>
-<!-- ✅ FAVICON: Dùng file ảnh -->
 <link rel="icon" type="image/png" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiA_SSk0xEjCxmisWqj6TZvGFcqHLSW3rpHAgexzO5EW2EsIwjIvM7fGZjtXKntPFz-FRLF2-FBcL-hzdhyphenhyphen60bUW35aUW3Igqfi_XvrMEDsQrdSGmxq6hh8jaOxHJQqVBUsKaX1KTMZFXS4wJFWGFE-26r9hKXZ4_7FX5iwQEwxKmMUTVioMfrvyKH7dKE/s320/download.png">
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- FIX#5: JSZip for Batch Mode ZIP download -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<!-- FIX#1: Thêm Inter font cho nổi bật hơn -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
 tailwind.config = {
@@ -22,7 +19,6 @@ tailwind.config = {
         inter: ['Inter', 'sans-serif']
       },
       borderRadius: { xl: '1rem', '2xl': '1.5rem', '3xl': '2rem' },
-      /* FIX#1: Tăng font size scale */
       fontSize: {
         'xs':   ['0.8rem',   { lineHeight: '1.2rem' }],
         'sm':   ['0.9rem',   { lineHeight: '1.4rem' }],
@@ -39,9 +35,7 @@ tailwind.config = {
 }
 </script>
 <style>
-/* ══════════════════════════════════════════
-   DESIGN TOKENS – Light & Dark
-   ══════════════════════════════════════════ */
+
 :root {
   /* Glass surfaces */
   --glass-bg:          rgba(255,255,255,0.72);
@@ -170,7 +164,6 @@ p, span, div, label, li {
 .text-muted  { color: var(--text-muted) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 
-/* ── Opacity helpers – đảm bảo đủ tương phản ── */
 .dark .opacity-40 { opacity: 0.65 !important; }
 .dark .opacity-50 { opacity: 0.70 !important; }
 .dark .opacity-60 { opacity: 0.80 !important; }
@@ -195,17 +188,12 @@ textarea:focus, input:focus {
   box-shadow: 0 0 0 2.5px rgba(99,102,241,0.35) !important;
 }
 
-/* ── Read-only result textareas ── */
 textarea[readonly] {
   background: var(--surface-2) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
 
-/* ══════════════════════════════════════════
-   BUTTONS – secondary / gray
-   ══════════════════════════════════════════ */
-/* Gray buttons dùng bg-gray-200 dark:bg-gray-700 */
 .dark .bg-gray-700,
 .dark .dark\:bg-gray-700 {
   background-color: rgba(81, 105, 138, 0.8) !important;
@@ -234,10 +222,6 @@ textarea[readonly] {
 .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .btn-primary:active { transform: translateY(0); }
 
-/* ══════════════════════════════════════════
-   CARDS & PANELS (mica-light children)
-   ══════════════════════════════════════════ */
-
 /* File drop zone */
 .dark label .border-dashed {
   border-color: rgba(148,163,184,0.25) !important;
@@ -260,9 +244,6 @@ textarea[readonly] {
   background: rgba(51,65,85,0.40) !important;
 }
 
-/* ══════════════════════════════════════════
-   BATCH ITEMS & KEY ITEMS
-   ══════════════════════════════════════════ */
 .batch-item {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px; border-radius: 12px;
@@ -315,7 +296,7 @@ textarea[readonly] {
 .dark .text-green-600{ color: #6ee7b7 !important; }
 .dark .text-yellow-600{ color: #fde68a !important; }
 
-/* dark:text-red-400 etc. keep them */
+
 .dark .dark\:text-red-400   { color: #fca5a5 !important; }
 .dark .dark\:text-green-300 { color: #86efac !important; }
 .dark .dark\:text-amber-300 { color: #fcd34d !important; }
@@ -363,16 +344,13 @@ textarea[readonly] {
   background: rgba(255,255,255,0.7);
 }
 
-/* ══════════════════════════════════════════
-   WELCOME MODAL & PERMISSION CARD (dark)
-   ══════════════════════════════════════════ */
 .dark .permission-card {
   background: #2b1478 !important;
   color: #f1f5f9 !important;
   border: 1px solid rgba(148,163,184,0.15);
 }
 
-/* Audio player dark */
+
 .dark audio,
 .dark video {
   filter: invert(0.85) hue-rotate(180deg);
@@ -437,9 +415,6 @@ textarea[readonly] {
 </head>
 <body class="font-inter">
 
-<!-- ============================================================ -->
-<!-- LICENSE GATE - TANDIGITAL-AI PROTECTION SYSTEM              -->
-<!-- ============================================================ -->
 <div id="license-gate" style="
   position:fixed;top:0;left:0;width:100%;height:100%;
   background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);
@@ -507,18 +482,8 @@ textarea[readonly] {
 </div>
 
 <script>
-// ============================================================
-// LICENSE SYSTEM - CẤU HÌNH (CHỈ SỬA 1 DÒNG BÊN DƯỚI)
-// ============================================================
 const LIC_API = "https://script.google.com/macros/s/AKfycbxtAljxYrQhugG9Fqf0cT1KuOvGpsrUegSMurqFQQ0ez1mKMDOhGprcU2nMJdOjWVxT/exec";
-// ↑ Dán URL Google Apps Script của bạn vào đây
-// VD: "https://script.google.com/macros/s/AKfycby.../exec"
-
-const LIC_CACHE_HOURS = 87600; // ~10 năm = lưu mãi mãi
-
-// ============================================================
-// HÀM KÍCH HOẠT LICENSE
-// ============================================================
+const LIC_CACHE_HOURS = 87600; 
 async function licActivate() {
   const key   = (document.getElementById('lic-input').value || '').trim();
   const msg   = document.getElementById('lic-msg');
@@ -545,7 +510,6 @@ async function licActivate() {
     const data   = await res.json();
 
     if (data.success) {
-      // ✅ KEY HỢP LỆ
       const expireAt = new Date(
         Date.now() + LIC_CACHE_HOURS * 60 * 60 * 1000
       ).toISOString();
@@ -575,7 +539,7 @@ async function licActivate() {
     }
 
   } catch (err) {
-    // ⚡ Không có mạng → kiểm tra cache
+    
     const cachedKey   = localStorage.getItem('tdai_key');
     const cachedUntil = localStorage.getItem('tdai_cache');
     const cachedName  = localStorage.getItem('tdai_name');
@@ -603,49 +567,35 @@ function licMsg(text, color) {
   el.style.color  = color;
 }
 
-// ============================================================
-// TỰ ĐỘNG KIỂM TRA KHI MỞ APP (bypass nếu cache còn hạn)
-// ============================================================
+
 (function licAutoCheck() {
   const cachedKey       = localStorage.getItem('tdai_key');
   const isPermanent     = localStorage.getItem('tdai_permanent');
   const gate            = document.getElementById('license-gate');
 
-  // ✅ Nếu đã từng xác thực thành công → bỏ qua màn hình khóa mãi mãi
+  
   if (cachedKey && isPermanent === 'true') {
     gate.remove();
     return;
   }
 
-  // Nếu có key cũ nhưng chưa permanent → điền sẵn vào ô input cho tiện
+  
   if (cachedKey) {
     const inp = document.getElementById('lic-input');
     if (inp) inp.value = cachedKey;
   }
 })();
 </script>
-<!-- ============================================================ -->
-<!-- KẾT THÚC LICENSE GATE                                       -->
-<!-- ============================================================ -->
-
 <div id="root"></div>
-
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.10/babel.min.js"></script>
 
 <script type="text/babel">
-/* ═══════════════════════════════════════════════════
-   TANDIGITAL-AI — Professional AI Work Suite v2.0
-   Single-file SPA | React 18 UMD + Tailwind CDN
-   FIXES: Font, API Key Security, Model Loader,
-          Mobile Permission, Batch Mode + ZIP
-   Updated: 2026-03-13
-   ═══════════════════════════════════════════════════ */
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-// ─────────────── CONSTANTS ───────────────
+
 const APP_TABS = { stt:'stt', tts:'tts', screen:'screen', converter:'converter' };
 const THEME_COLORS = {
   green:  { primary:'#10b981', hover:'#059669', ring:'rgba(16,185,129,0.3)',  bg:'rgba(16,185,129,0.08)' },
@@ -664,7 +614,7 @@ const BG_IMAGES = {
 };
 const LOGO_URL = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiA_SSk0xEjCxmisWqj6TZvGFcqHLSW3rpHAgexzO5EW2EsIwjIvM7fGZjtXKntPFz-FRLF2-FBcL-hzdhyphenhyphen60bUW35aUW3Igqfi_XvrMEDsQrdSGmxq6hh8jaOxHJQqVBUsKaX1KTMZFXS4wJFWGFE-26r9hKXZ4_7FX5iwQEwxKmMUTVioMfrvyKH7dKE/s320/download.png';
 
-// FIX#3: Dynamic MODELS – sẽ được cập nhật khi load từ API
+
 let MODELS = {
   STT:      'gemini-2.5-flash',
   TTS:      'gemini-2.5-flash-preview-tts',
@@ -673,11 +623,9 @@ let MODELS = {
   FALLBACK: 'gemini-2.5-flash-lite'
 };
 
-// FIX#3: Model selection logic – auto-pick best available
+
 function pickBestModel(modelList, task) {
   if (!modelList || modelList.length === 0) return MODELS[task] || MODELS.FALLBACK;
-
-  // Priority order for each task
   const priorities = {
     STT:      ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
     TTS:      ['gemini-2.5-flash-preview-tts', 'gemini-2.5-flash-tts', 'gemini-2.5-flash'],
@@ -718,7 +666,6 @@ const VOICE_OPTIONS = [
   { name:'Sulafat',  tone:'Warm',        desc:'Giọng ấm áp, thân thiện' }
 ];
 
-// ─────────────── TRANSLATIONS (giữ nguyên + thêm keys mới) ───────────────
 const T = {
   vi: {
     title:'TDA-TRỢ LÝ AI', subtitle:'Professional AI Work Suite',
@@ -992,7 +939,6 @@ function addWavHeader(pcm, sr=24000, ch=1, bits=16) {
   return buf;
 }
 
-// ─────────────── FIX#2: API KEY MANAGER – SECURE ───────────────
 const keyMgr = {
   keys: [], idx: 0, failed: new Set(),
   load() {
@@ -1008,7 +954,7 @@ const keyMgr = {
     localStorage.setItem('ttd_api_keys', JSON.stringify(this.keys));
     localStorage.setItem('ttd_api_key_index', String(this.idx));
   },
-  // FIX#2: addKey – thêm từng key, không replace hết
+  
   addKey(key) {
     const k = key.trim();
     if (!k || k.length < 10) return false;
