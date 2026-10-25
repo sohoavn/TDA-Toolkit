@@ -411,7 +411,7 @@ textarea[readonly] {
  box-shadow:0 32px 80px rgba(0,0,0,0.5);">
 
  <!-- Logo -->
- <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiA_SSk0xEjCxmisWqj6TZvGFcqHLSW3rpHAgexzO5EW2EsIwjIvM7fGZjtXKntPFz-FRLF2-FBcL-hzdhyphenhyphen60bUW35aUW3Igqfi_XvrMEDsQrdSGmxq6hh8jaOxHJQqVBUsKaX1KTMZFXS4wJFWGFE-26r9hKXZ4_7FX5iwQEwxKmMUTVioMfrvyKH7dKE/s320/download.png"
+ <img src="https://res.cloudinary.com/dadxqztlj/image/upload/v1792929411/tda-2_epc55b.png"
  style="width:64px;height:64px;border-radius:18px;margin:0 auto 20px;
  display:block;background:rgba(255,255,255,0.1);padding:8px;">
 
@@ -1470,7 +1470,7 @@ function safeHtml(html) {
 // ===== END TDA ENGINE =====
 
 // ===== TDA TTS v4: WAV 3.8 + văn bản dài + phong cách + tự chờ quota =====
-const TTS_CHUNK_CHARS = 1500;
+const TTS_CHUNK_CHARS = 900;
 const TTS_MAX_CHARS = 40000;
 const TTS_GAP_MS = 250;
 function ttsVer(model) { const m = String(model || '').match(/gemini-(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; }
@@ -1511,7 +1511,7 @@ function ttsParseAudio(b64, mime) {
  }
  return { pcm: pcm || bytes.slice(44), rate, ch, bits };
 }
-async function generateSpeech(text, voice = 'Puck', opts = {}) {
+async function generateSpeech_V4(text, voice = 'Puck', opts = {}) {
  const style = String(opts.style || '').trim();
  const all = String(text || '').trim();
  if (!all) throw new Error('Chưa nhập văn bản.');
@@ -1555,6 +1555,120 @@ async function generateSpeech(text, voice = 'Puck', opts = {}) {
  return { url: URL.createObjectURL(blob), blob, model: usedModel, parts: chunks.length };
 }
 // ===== END TTS v4 =====
+
+// ===== TDA TTS v5: tự thử lại khi OTHER + chia nhỏ đoạn khó + chạy tiếp =====
+const TTS_RETRY = 3;
+const TTS_MIN_SPLIT = 120;
+const ttsPieceCache = new Map();
+const ttsSleep = (ms) => new Promise(r => setTimeout(r, ms));
+function ttsHalf(s) {
+ const mid = Math.floor(s.length / 2);
+ let cut = -1;
+ for (const sep of ['. ', '! ', '? ', '\n', '; ', ', ', ' ']) {
+  const a = s.lastIndexOf(sep, mid), b = s.indexOf(sep, mid);
+  const best = [a, b].filter(x => x > s.length * 0.2 && x < s.length * 0.8).sort((x, y) => Math.abs(x - mid) - Math.abs(y - mid))[0];
+  if (best !== undefined) { cut = best + sep.length; break; }
+ }
+ if (cut < 0) cut = mid;
+ return [s.slice(0, cut).trim(), s.slice(cut).trim()].filter(Boolean);
+}
+async function ttsOne(chunk, voice, style, report) {
+ const ck = voice + '|' + style + '|' + chunk;
+ if (ttsPieceCache.has(ck)) return ttsPieceCache.get(ck);
+ let lastWhy = '';
+ for (let attempt = 0; attempt < TTS_RETRY; attempt++) {
+  if (attempt > 0) report('(thử lại ' + (attempt + 1) + '/' + TTS_RETRY + ')');
+  const useStyle = style && attempt < TTS_RETRY - 1;
+  const build = (model) => {
+   const part = { text: chunk };
+   if (useStyle) { if (ttsVer(model) >= 3.8) part.speech_metadata = { style }; else part.text = 'Đọc với phong cách ' + style + ': ' + chunk; }
+   return { contents: [{ role: 'user', parts: [part] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } };
+  };
+  let d;
+  try { d = await tdaCall('TTS', build); }
+  catch (e) {
+   const msg = String(e.message || '');
+   if (msg.startsWith('QUOTA')) {
+    for (let s = 30; s > 0; s--) { report('(hết lượt, chờ ' + s + 's)'); await ttsSleep(1000); }
+    tdaBadKeys.clear(); lastWhy = 'hết lượt (QUOTA)'; continue;
+   }
+   if (/Lỗi mạng|internal|unavailable|overloaded|deadline|HTTP 5\d\d/i.test(msg)) {
+    lastWhy = msg; await ttsSleep(3000 * (attempt + 1)); continue;
+   }
+   throw e;
+  }
+  const cand = d?.candidates?.[0];
+  const fr = String(cand?.finishReason || '');
+  const block = d?.promptFeedback?.blockReason || (/SAFETY|PROHIBITED|BLOCKLIST|SPII/.test(fr) ? fr : '');
+  if (block) throw new Error('Nội dung bị bộ lọc của Google chặn (' + block + '). Hãy sửa câu chữ trong đoạn này.');
+  const p = (cand?.content?.parts || []).find(x => x.inlineData && x.inlineData.data);
+  if (p) {
+   const a = ttsParseAudio(p.inlineData.data, p.inlineData.mimeType);
+   const sec = a.pcm.length / (a.rate * a.ch * (a.bits / 8));
+   const tooShort = chunk.length > 200 && sec < chunk.length / 45;
+   if ((!fr || fr === 'STOP') && !tooShort && a.pcm.length > 0) {
+    const res = { a, model: d.__model };
+    ttsPieceCache.set(ck, res);
+    if (ttsPieceCache.size > 150) ttsPieceCache.delete(ttsPieceCache.keys().next().value);
+    return res;
+   }
+   lastWhy = tooShort ? 'âm thanh bị cắt (' + sec.toFixed(1) + 's)' : 'âm thanh dở dang (' + fr + ')';
+  } else {
+   lastWhy = 'Google trả về rỗng (' + (fr || 'không rõ') + ')';
+  }
+  await ttsSleep(1500 * (attempt + 1));
+ }
+ const err = new Error(lastWhy || 'không nhận được âm thanh');
+ err.ttsSplit = !/QUOTA/.test(lastWhy);
+ throw err;
+}
+async function ttsSynth(chunk, voice, style, report, depth) {
+ try { return [await ttsOne(chunk, voice, style, report)]; }
+ catch (e) {
+  if (e.ttsSplit && chunk.length > TTS_MIN_SPLIT && depth < 3) {
+   report('(chia nhỏ đoạn khó)');
+   const out = [];
+   for (const h of ttsHalf(chunk)) out.push(...await ttsSynth(h, voice, style, report, depth + 1));
+   return out;
+  }
+  throw e;
+ }
+}
+async function generateSpeech(text, voice = 'Puck', opts = {}) {
+ const style = String(opts.style || '').trim();
+ const all = String(text || '').trim();
+ if (!all) throw new Error('Chưa nhập văn bản.');
+ if (all.length > TTS_MAX_CHARS) throw new Error('Văn bản quá dài (' + all.length + ' ký tự). Tối đa ' + TTS_MAX_CHARS + ' ký tự mỗi lần.');
+ const chunks = ttsSplit(all).filter(c => /[\p{L}\p{N}]/u.test(c));
+ if (!chunks.length) throw new Error('Văn bản không có chữ để đọc.');
+ const pieces = []; let fmt = null, usedModel = '';
+ for (let i = 0; i < chunks.length; i++) {
+  const report = (note) => { if (opts.onProgress) opts.onProgress(i + 1, chunks.length, note ? (chunks.length > 1 ? (i + 1) + '/' + chunks.length + ' ' : '') + note : ''); };
+  report('');
+  let res;
+  try { res = await ttsSynth(chunks[i], voice, style, report, 0); }
+  catch (e) {
+   const where = chunks.length > 1 ? 'Đoạn ' + (i + 1) + '/' + chunks.length + ' ("' + chunks[i].slice(0, 50) + '…"): ' : '';
+   const resume = i > 0 ? ' — Đã lưu ' + i + ' đoạn đầu. Bấm "Tạo Audio" lại (giữ nguyên văn bản và giọng) để chạy tiếp, không tốn lại lượt.' : '';
+   throw new Error(where + e.message + resume);
+  }
+  for (const r of res) {
+   if (!fmt) fmt = r.a;
+   if (r.a.rate !== fmt.rate || r.a.ch !== fmt.ch || r.a.bits !== fmt.bits) throw new Error('Các đoạn có định dạng âm thanh khác nhau. Hãy chọn cố định 1 model TTS trong Cài đặt rồi thử lại.');
+   const ba = fmt.ch * (fmt.bits / 8);
+   pieces.push(r.a.pcm.length % ba ? r.a.pcm.slice(0, r.a.pcm.length - (r.a.pcm.length % ba)) : r.a.pcm);
+   usedModel = r.model || usedModel;
+  }
+ }
+ const ba = fmt.ch * (fmt.bits / 8);
+ const gap = new Uint8Array(Math.round(fmt.rate * TTS_GAP_MS / 1000) * ba);
+ let total = 0; pieces.forEach((pc, i) => { total += pc.length + (i < pieces.length - 1 ? gap.length : 0); });
+ const pcm = new Uint8Array(total); let off = 0;
+ pieces.forEach((pc, i) => { pcm.set(pc, off); off += pc.length; if (i < pieces.length - 1) { pcm.set(gap, off); off += gap.length; } });
+ const blob = new Blob([addWavHeader(pcm, fmt.rate, fmt.ch, fmt.bits)], { type: 'audio/wav' });
+ return { url: URL.createObjectURL(blob), blob, model: usedModel, parts: pieces.length };
+}
+// ===== END TTS v5 =====
 
 
 async function geminiCall_OLD(model, body, retry=true) {
